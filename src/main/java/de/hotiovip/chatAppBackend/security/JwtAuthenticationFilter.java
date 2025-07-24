@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (user.isPresent()) {
                         // Create an Authentication object (no roles)
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                user.get().getUsername(), null, new ArrayList<>());
+                                user.get(), null, new ArrayList<>());
 
                         // Set the SecurityContext
                         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
                 else {
-                    System.out.println("Could no retrieve token's subject (user id)");
+                    System.out.println("Could not retrieve token's subject (user id)");
                 }
             } catch (Exception e) {
                 // If token is invalid, log the error and proceed without setting authentication

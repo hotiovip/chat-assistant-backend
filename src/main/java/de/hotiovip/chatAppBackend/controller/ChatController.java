@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -16,11 +17,6 @@ public class ChatController {
     @Autowired
     public ChatController(ChatService chatService) {
         this.chatService = chatService;
-    }
-
-    @GetMapping("/thread/create")
-    public ResponseEntity<String> createThread() {
-        return ResponseEntity.ok(chatService.createThread());
     }
 
     @PostMapping("/send")
