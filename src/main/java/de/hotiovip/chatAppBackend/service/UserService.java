@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,6 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    @Transactional
     public Optional<String> createThread() {
         // Create a thread
         Thread thread = openAIProvider.getOpenAIClient().threads().create(ThreadRequest.builder().build()).join();
@@ -63,8 +61,6 @@ public class UserService {
 
         return Optional.empty();
     }
-
-    @Transactional
     public Optional<List<String>> getThreads() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication.getPrincipal() instanceof User user) {
