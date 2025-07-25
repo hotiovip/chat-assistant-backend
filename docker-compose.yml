@@ -6,9 +6,9 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_DB: chat-assistant-db
-      POSTGRES_USER: backend
-      POSTGRES_PASSWORD: 4NEU0UIMu1yTa7JqqXwc
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -23,9 +23,9 @@ services:
     depends_on:
       - db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/chat-assistant-db
-      SPRING_DATASOURCE_USERNAME: backend
-      SPRING_DATASOURCE_PASSWORD: 4NEU0UIMu1yTa7JqqXwc
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
 volumes:
   postgres-data:
