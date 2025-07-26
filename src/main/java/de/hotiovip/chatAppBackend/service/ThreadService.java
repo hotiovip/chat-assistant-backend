@@ -19,14 +19,14 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class ChatService {
-    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
+public class ThreadService {
+    private static final Logger logger = LoggerFactory.getLogger(ThreadService.class);
 
     private final OpenAIProvider openAIProvider;
     private final UserService userService;
 
     @Autowired
-    public ChatService(OpenAIProvider openAIProvider, UserService userService) {
+    public ThreadService(OpenAIProvider openAIProvider, UserService userService) {
         this.openAIProvider = openAIProvider;
         this.userService = userService;
     }
