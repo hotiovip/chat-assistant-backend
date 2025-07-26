@@ -1,11 +1,9 @@
 package de.hotiovip.chatAppBackend.service;
 
 import de.hotiovip.chatAppBackend.component.OpenAIProvider;
-import de.hotiovip.chatAppBackend.entity.SendRequest;
-import de.hotiovip.chatAppBackend.entity.ThreadMessageDTO;
+import de.hotiovip.chatAppBackend.entity.ChatMessage;
 import io.github.sashirestela.openai.common.Page;
 import io.github.sashirestela.openai.domain.assistant.*;
-import io.github.sashirestela.openai.domain.assistant.Attachment.AttachmentTool;
 import io.github.sashirestela.openai.domain.file.FileRequest;
 import io.github.sashirestela.openai.domain.file.FileResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +31,7 @@ public class ChatService {
         this.userService = userService;
     }
 
-    public Optional<List<ThreadMessageDTO>> getThreadMessages(String threadId) {
+    public Optional<List<ChatMessage>> getThreadMessages(String threadId) {
         Optional<List<String>> optionalThreadIds = userService.getThreads();
         if (optionalThreadIds.isEmpty()) { // The user has no threads
             return Optional.empty();
@@ -42,31 +40,31 @@ public class ChatService {
             return Optional.empty();
         }
 
-        List<ThreadMessageDTO> threadMessageDTOList = new java.util.ArrayList<>(List.of());
+        List<ChatMessage> chatMessageList = new java.util.ArrayList<>(List.of());
         Page<ThreadMessage> messages = openAIProvider.getOpenAIClient().threadMessages().getList(threadId).join();
         for (ThreadMessage message : messages.getData()) {
-            threadMessageDTOList.add(new ThreadMessageDTO(message));
+            chatMessageList.add(new ChatMessage(message));
         }
 
-        return Optional.of(threadMessageDTOList);
+        return Optional.of(chatMessageList);
     }
 
-    public Optional<String> send(String threadId, SendRequest sendRequest) {
+    public Optional<String> send(String threadId, ChatMessage chatMessage) {
         if (!openAIProvider.isInitialized()) return Optional.empty();
 
         // Try to upload file
-        Optional<String> fileId = uploadFile(sendRequest.getFile());
-        if (fileId.isEmpty()) return Optional.empty();
+//        Optional<String> fileId = uploadFile(sendRequest.getFile());
+//        if (fileId.isEmpty()) return Optional.empty();
 
-        Attachment attachment = Attachment.builder()
-                .fileId(fileId.get())
-                .tool(AttachmentTool.FILE_SEARCH)
-                .build();
+//        Attachment attachment = Attachment.builder()
+//                .fileId(fileId.get())
+//                .tool(AttachmentTool.FILE_SEARCH)
+//                .build();
 
         ThreadMessageRequest threadMessageRequest = ThreadMessageRequest.builder()
                 .role(ThreadMessageRole.USER)
-                .content(sendRequest.getMessage())
-                .attachment(attachment)
+                .content(chatMessage.getContentList().getFirst())
+//                .attachment(attachment)
                 .build();
         openAIProvider.getOpenAIClient().threadMessages().create(threadId, threadMessageRequest);
 
@@ -102,5 +100,9 @@ public class ChatService {
             logger.error("Exception while saving uploaded file: {}", e.getMessage(), e);
             return Optional.empty();
         }
+    }
+
+    public ThreadRun.RunStatus getRunStatus(String threadId, String runId) {
+        return openAIProvider.getOpenAIClient().threadRuns().getOne(threadId, runId).join().getStatus();
     }
 }
