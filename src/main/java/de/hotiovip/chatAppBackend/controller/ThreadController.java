@@ -20,6 +20,18 @@ public class ThreadController {
         this.threadService = threadService;
     }
 
+    @GetMapping("/create")
+    public ResponseEntity<String> createThread() {
+        Optional<String> threadId = threadService.createThread();
+        return threadId.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.internalServerError().build());
+    }
+
+    @GetMapping("/get")
+    public ResponseEntity<List<String>> getThreads() {
+        Optional<List<String>> threadsId = threadService.getThreads();
+        return threadsId.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+    }
+
     @GetMapping("/{threadId}/messages")
     public ResponseEntity<List<ChatMessage>> getMessages(@PathVariable String threadId) {
         Optional<List<ChatMessage>> messages = threadService.getThreadMessages(threadId);

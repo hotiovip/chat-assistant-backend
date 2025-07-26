@@ -2,11 +2,16 @@ package de.hotiovip.chatAppBackend.service;
 
 import de.hotiovip.chatAppBackend.component.OpenAIProvider;
 import de.hotiovip.chatAppBackend.entity.ChatMessage;
+import de.hotiovip.chatAppBackend.entity.User;
+import de.hotiovip.chatAppBackend.repository.UserRepository;
 import io.github.sashirestela.openai.common.Page;
 import io.github.sashirestela.openai.domain.assistant.*;
+import io.github.sashirestela.openai.domain.assistant.Thread;
 import io.github.sashirestela.openai.domain.file.FileRequest;
 import io.github.sashirestela.openai.domain.file.FileResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -23,16 +29,52 @@ public class ThreadService {
     private static final Logger logger = LoggerFactory.getLogger(ThreadService.class);
 
     private final OpenAIProvider openAIProvider;
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public ThreadService(OpenAIProvider openAIProvider, UserService userService) {
+    public ThreadService(OpenAIProvider openAIProvider, UserRepository userRepository) {
         this.openAIProvider = openAIProvider;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
+    public Optional<String> createThread() {
+        // Create a thread
+        Thread thread = openAIProvider.getOpenAIClient().threads().create(ThreadRequest.builder().build()).join();
+
+        // Assign the thread to the user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() instanceof User user) {
+            List<String> threadIds = user.getThreadIds();
+            if (threadIds == null) {
+                // Create new list as there is none yet
+                threadIds = new ArrayList<>();
+            }
+
+            threadIds.add(thread.getId());
+            user.setThreadIds(threadIds);
+            userRepository.save(user);
+
+            return Optional.of(thread.getId());
+        }
+
+        return Optional.empty();
+    }
+    public Optional<List<String>> getThreads() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() instanceof User user) {
+            List<String> threadIds = user.getThreadIds();
+            if (threadIds != null) {
+                return Optional.of(threadIds);
+            }
+        }
+
+        // Will return this if the above conditions are not met
+        return Optional.empty();
+    }
+
+
     public Optional<List<ChatMessage>> getThreadMessages(String threadId) {
-        Optional<List<String>> optionalThreadIds = userService.getThreads();
+        Optional<List<String>> optionalThreadIds = getThreads();
         if (optionalThreadIds.isEmpty()) { // The user has no threads
             return Optional.empty();
         }
