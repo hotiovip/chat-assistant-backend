@@ -36,12 +36,14 @@ public class OpenAIProvider {
                 .clientAdapter(new OkHttpClientAdapter())
                 .build();
 
-        assistantId = openAIClient.assistants().create(AssistantRequest.builder()
-                .name("Personal AI assistant")
-                .model("gpt-3.5-turbo")
-                .instructions("You are a personal AI assistant")
-                .description("General AI assistant")
-                .build()).join().getId();
+        // TODO: Remove/Change this as it creates a new AI everytime
+        // TODO: Define an assistant id in the config and let the backend use it everytime
+//        assistantId = openAIClient.assistants().create(AssistantRequest.builder()
+//                .name("Personal AI assistant")
+//                .model("gpt-3.5-turbo")
+//                .instructions("You are a personal AI assistant")
+//                .description("General AI assistant")
+//                .build()).join().getId();
     }
 
     public boolean isInitialized() {
