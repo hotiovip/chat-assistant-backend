@@ -3,7 +3,6 @@ package de.hotiovip.chatAppBackend.component;
 import de.hotiovip.chatAppBackend.Config;
 import io.github.sashirestela.cleverclient.client.OkHttpClientAdapter;
 import io.github.sashirestela.openai.SimpleOpenAI;
-import io.github.sashirestela.openai.domain.assistant.AssistantRequest;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -25,7 +24,7 @@ public class OpenAIProvider {
 
     @PostConstruct
     public void init() {
-        String openAIKey = config.getOpenAIKey();
+        String openAIKey = config.getApiKey();
         if (openAIKey == null || openAIKey.isEmpty()) {
             logger.error("OpenAI key is null or empty");
             return;
@@ -36,8 +35,8 @@ public class OpenAIProvider {
                 .clientAdapter(new OkHttpClientAdapter())
                 .build();
 
-        // TODO: Remove/Change this as it creates a new AI everytime
-        // TODO: Define an assistant id in the config and let the backend use it everytime
+        assistantId = config.getAssistantId();
+
 //        assistantId = openAIClient.assistants().create(AssistantRequest.builder()
 //                .name("Personal AI assistant")
 //                .model("gpt-3.5-turbo")
