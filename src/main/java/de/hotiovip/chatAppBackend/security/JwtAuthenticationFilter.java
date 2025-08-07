@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,11 +20,15 @@ import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private  UserService userService;
+    private final JwtUtil jwtUtil;
+    private final UserService userService;
+
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserService userService) {
+        this.jwtUtil = jwtUtil;
+        this.userService = userService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -46,15 +52,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                     else {
-                        System.out.println("Could not retrieve user from token's id value");
+                        logger.error("Could not retrieve user from token's id value");
                     }
                 }
                 else {
-                    System.out.println("Could not retrieve token's subject (user id)");
+                    logger.error("Could not retrieve token's subject (user id)");
                 }
             } catch (Exception e) {
-                // If token is invalid, log the error and proceed without setting authentication
-                System.out.println("Invalid token: " + e.getMessage());
+                logger.error("Invalid token: {}", e.getMessage());
             }
         }
 
