@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -15,10 +16,15 @@ import java.util.List;
 public class ChatMessage {
     private ThreadMessageRole role;
     private List<String> contentList;
+    private byte[] attachment;
+    private String attachmentName;
+    private String attachmentExtension;
 
     public ChatMessage() {}
 
     public ChatMessage(ThreadMessage threadMessage) {
+        this.role = threadMessage.getRole();
+
         for(ContentPart contentPart : threadMessage.getContent()) {
             this.contentList = new ArrayList<>();
 
@@ -27,7 +33,9 @@ public class ChatMessage {
                 this.contentList.add(contentPartTextAnnotation.getText().getValue());
             }
         }
-        this.role = threadMessage.getRole();
+
+        this.attachment = null;
+        this.attachmentExtension = null;
     }
 
     @Override
@@ -35,6 +43,9 @@ public class ChatMessage {
         return "ChatMessage{" +
                 "role=" + role +
                 ", contentList=" + contentList +
+                ", attachment=" + Arrays.toString(attachment) +
+                ", attachmentName='" + attachmentName + '\'' +
+                ", attachmentExtension='" + attachmentExtension + '\'' +
                 '}';
     }
 }

@@ -5,6 +5,8 @@ import de.hotiovip.chatAppBackend.entity.ChatMessage;
 import de.hotiovip.chatAppBackend.entity.User;
 import de.hotiovip.chatAppBackend.repository.UserRepository;
 import io.github.sashirestela.openai.common.Page;
+import io.github.sashirestela.openai.common.content.ContentPart;
+import io.github.sashirestela.openai.common.content.ContentPart.*;
 import io.github.sashirestela.openai.domain.assistant.*;
 import io.github.sashirestela.openai.domain.assistant.Thread;
 import io.github.sashirestela.openai.domain.assistant.ThreadRun.RunStatus;
@@ -146,6 +148,7 @@ public class ThreadService {
     public Optional<String> send(String threadId, ChatMessage chatMessage) {
         if (!openAIProvider.isInitialized()) return Optional.empty();
 
+        // Step 1: Generate title if needed
         if (getThreadTitle(threadId).isEmpty()) {
             Optional<List<ChatMessage>> threadMessages = getThreadMessages(threadId);
             String firstMessage;
@@ -171,22 +174,36 @@ public class ThreadService {
             openAIProvider.getOpenAIClient().threads().modify(threadId, threadModifyRequest).join();
         }
 
-        // Try to upload file
-//        Optional<String> fileId = uploadFile(sendRequest.getFile());
-//        if (fileId.isEmpty()) return Optional.empty();
+        // Step 2: Prepare lists
+        List<ContentPart> contentParts = new ArrayList<>();
+        List<Attachment> attachments = new ArrayList<>();
 
-//        Attachment attachment = Attachment.builder()
-//                .fileId(fileId.get())
-//                .tool(AttachmentTool.FILE_SEARCH)
-//                .build();
+        // Add text message
+        contentParts.add(ContentPartText.of(chatMessage.getContentList().getFirst()));
 
+        if (chatMessage.getAttachment() != null) {
+            Optional<String> fileIdOptional = upload(chatMessage.getAttachment(), chatMessage.getAttachmentName(), chatMessage.getAttachmentExtension());
+
+            fileIdOptional.ifPresent(fileId -> {
+                if ("png".equals(chatMessage.getAttachmentExtension()) || "jpg".equals(chatMessage.getAttachmentExtension())) {
+                    contentParts.add(ContentPartImageFile.of(ContentPartImageFile.ImageFile.of(fileId)));
+                } else if ("pdf".equals(chatMessage.getAttachmentExtension())) {
+                    // For PDF, add to attachments list
+                    attachments.add(Attachment.builder().fileId(fileId).tool(Attachment.AttachmentTool.FILE_SEARCH).build());
+                }
+            });
+        }
+
+        // Step 4: Send message to thread
         ThreadMessageRequest threadMessageRequest = ThreadMessageRequest.builder()
                 .role(ThreadMessageRole.USER)
-                .content(chatMessage.getContentList().getFirst())
-//                .attachment(attachment)
+                .content(contentParts)
+                .attachments(attachments)
                 .build();
+
         openAIProvider.getOpenAIClient().threadMessages().create(threadId, threadMessageRequest);
 
+        // Step 5: Run the assistant
         ThreadRunRequest threadRunRequest = ThreadRunRequest.builder()
                 .assistantId(openAIProvider.getAssistantId())
                 .build();
@@ -194,10 +211,10 @@ public class ThreadService {
 
         return Optional.of(threadRun.getId());
     }
-    private Optional<String> uploadFile(byte[] file) {
+    private Optional<String> upload(byte[] file, String name, String extension) {
         try {
             // Create temporary file
-            Path tempFile = Files.createTempFile("upload-", ".bin");
+            Path tempFile = Files.createTempFile(name, "." + extension);
             Files.write(tempFile, file);
 
             // Create file request
